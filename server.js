@@ -1,8 +1,24 @@
 const WebSocket = require('ws');
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
 
-const wss = new WebSocket.Server({ port: 8080 });
+const server = http.createServer((req, res) => {
+    let filePath = path.join(__dirname, 'public', req.url === '/' ? 'index.html' : req.url);
+    fs.readFile(filePath, (err, content) => {
+        if (err) {
+            res.writeHead(404);
+            res.end('Not Found');
+        } else {
+            res.writeHead(200);
+            res.end(content);
+        }
+    });
+});
 
-console.log('WebSocket-сервер запущен на порту 8080');
+const wss = new WebSocket.Server({ server });
+
+console.log('Сервер запущен на http://localhost:8080');
 
 wss.on('connection', (ws) => {
     console.log('Новый клиент подключился к серверу');
@@ -33,3 +49,5 @@ binanceWs.on('error', (error) => {
 binanceWs.on('close', () => {
     console.log('Соединение с WebSocket Binance закрыто');
 });
+
+server.listen(8080);

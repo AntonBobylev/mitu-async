@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Котировки криптовалют в реальном времени</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f4f4f9;
+                margin: 0;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            .container {
+                background: white;
+                padding: 20px 40px;
+                border-radius: 8px;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                max-width: 400px;
+                width: 100%;
+                text-align: center;
+            }
+            .status {
+                font-weight: bold;
+                margin-bottom: 20px;
+                padding: 8px;
+                border-radius: 4px;
+            }
+            /*noinspection CssUnusedSymbol*/
+            .status.connected {
+                background-color: #d4edda;
+                color: #155724;
+            }
+            .status.disconnected {
+                background-color: #f8d7da;
+                color: #721c24;
+            }
+            .ticker-box {
+                font-size: 1.2em;
+                margin: 15px 0;
+            }
+            .price {
+                font-size: 2em;
+                font-weight: bold;
+                color: #28a745;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="container">
+            <h2>Котировки Binance (WS)</h2>
+            <div id="status" class="status disconnected">Статус: Отключено</div>
+
+            <div class="ticker-box">
+                <div>Пара: <span id="symbol">--</span></div>
+                <div class="price" id="price">0.00</div>
+            </div>
+        </div>
+
+        <script>
+            const statusDiv = document.getElementById('status');
+            const symbolSpan = document.getElementById('symbol');
+            const priceDiv = document.getElementById('price');
+
+            const ws = new WebSocket('ws://localhost:8080');
+
+            ws.onopen = () => {
+                console.log('Подключено к локальному WebSocket-серверу');
+                statusDiv.textContent = 'Статус: Подключено';
+                statusDiv.className = 'status connected';
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+
+                    if (data.s && data.c) {
+                        symbolSpan.textContent = data.s;
+                        priceDiv.textContent = Number(data.c).toLocaleString('ru-RU', { minimumFractionDigits: 2 });
+                    }
+                } catch (error) {
+                    console.error('Ошибка при парсинге данных:', error);
+                }
+            };
+
+            ws.onclose = () => {
+                console.log('Соединение с сервером закрыто');
+                statusDiv.textContent = 'Статус: Отключено';
+                statusDiv.className = 'status disconnected';
+            };
+
+            ws.onerror = (error) => {
+                console.error('Ошибка WebSocket:', error);
+            };
+        </script>
+    </body>
+</html>
